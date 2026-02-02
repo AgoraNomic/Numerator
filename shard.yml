@@ -1,0 +1,17 @@
+name: numerator
+version: 0.1.0
+
+authors:
+  - your-name-here <your-email-here>
+
+targets:
+  numerator:
+    main: src/numerator.cr
+
+dependencies:
+  pg:
+    github: will/crystal-pg
+
+crystal: '>= 1.19.1'
+
+license: MIT
