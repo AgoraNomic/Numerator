@@ -1,0 +1,8 @@
+# pgcrate configuration
+# See: https://github.com/jackschultz/pgcrate
+
+[paths]
+migrations = "db/migrations"
+
+[defaults]
+with_down = true
