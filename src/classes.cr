@@ -13,6 +13,15 @@ class Entity
 		@fullname = fullname
 		@cards = cards
 	end
+
+	def to_hash : Hash
+		{
+			"id" => @id.to_s,
+			"shortname" => @shortname,
+			"fullname" => @fullname,
+			"cards" => @cards
+		}
+	end
 end
 
 class NumeratorContext
@@ -39,6 +48,45 @@ class NumeratorContext
 		Entity.new(id, shortname, fullname, cards)
 	end
 
+	def get_entities : Array(Entity)
+		rs = @conn.query(
+			"SELECT id, shortname, fullname, cards FROM entity"
+		)
+
+		result = Array(Entity).new
+
+		rs.each do
+			id, shortname, fullname, cards = rs.read(UUID, String, String | Nil, Array(Int32))
+			result << Entity.new(id, shortname, fullname, cards)
+		end
+
+		result
+	end
+
+	def get_history : Array(Hash(String, Time | String | Array(Int32) | Nil))
+		result = Array(Hash(String, Time | String | Array(Int32) | Nil)).new 100
+
+		rs = @conn.query <<-SQL
+				SELECT action.ts, sub.shortname, action.cards, rec.shortname
+				FROM action
+					LEFT JOIN entity AS sub ON sub.id = action.subject
+					LEFT JOIN entity AS rec ON rec.id = action.receiver
+				ORDER BY action.ts
+			SQL
+
+		rs.each do
+			timestamp, subject, cards, receiver = rs.read(Time, String, Array(Int32), String | Nil)
+			result << {
+				"timestamp" => timestamp,
+				"subject" => subject,
+				"cards" => cards,
+				"receiver" => receiver,
+			}
+		end
+
+		result
+	end
+
 	def grant(name : String, ts timestamp : Time, cards : Array(Int32), comment : String | Nil = nil)
 		ent = get_entity_by_name name
 		newcards = ent.@cards.zip(cards).map do |c|
@@ -57,6 +105,30 @@ class NumeratorContext
 		end
 
 		puts newcards
+	end
+
+	def add_note(content : String, range : Range(Time | Nil, Time | Nil))
+		@conn.exec <<-SQL, content, range.begin, range.end
+			INSERT INTO note (content, start_time, end_time)
+			VALUES ($1, $2, $3)
+		SQL
+	end
+
+	def get_note_text(ts timestamp : Time = Time.utc) : Array(String)
+		result = [] of String
+		rs = @conn.query <<-SQL, timestamp
+			SELECT content FROM note
+			WHERE (start_time < $1 OR start_time IS NULL)
+				AND ($1 < end_time OR end_time IS NULL)
+		SQL
+
+		rs.each do
+			result << rs.read(String)
+		end
+
+		puts result
+
+		result
 	end
 
 	def close
