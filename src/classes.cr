@@ -107,6 +107,39 @@ class NumeratorContext
 		puts newcards
 	end
 
+	def undo_by_id(id : UUID) : Bool
+		action_cards, subject, action_type, entity_cards = @conn.query_one <<-SQL, id, as: {Array(Int32), UUID, String, Array(Int32)}
+			SELECT action.cards, action.subject, action.action, entity.cards
+			FROM action
+			JOIN entity ON action.subject = entity.id
+			WHERE action.id = $1
+		SQL
+
+		if action_type != "adjust"
+			return false
+		end
+
+		newcards = entity_cards.zip(action_cards).map do |c|
+			result = c[0] + c[1]
+			if result < 0
+				return false
+			end
+			result
+		end
+
+		@conn.transaction do |tx|
+			@conn.exec <<-SQL, id
+				DELETE FROM action WHERE id = $1
+			SQL
+
+			@conn.exec <<-SQL, newcards, subject
+				UPDATE entity SET cards = $1 WHERE id = $2;
+			SQL
+		end
+
+		true
+	end
+
 	def add_note(content : String, range : Range(Time | Nil, Time | Nil))
 		@conn.exec <<-SQL, content, range.begin, range.end
 			INSERT INTO note (content, start_time, end_time)
@@ -125,8 +158,6 @@ class NumeratorContext
 		rs.each do
 			result << rs.read(String)
 		end
-
-		puts result
 
 		result
 	end

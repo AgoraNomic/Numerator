@@ -1,3 +1,14 @@
+def create_transmute_card_a(a : Array(Int32)) : Array(Int32)
+	cards = Array.new 10, 0
+	total = 0
+	nums = a.map do |i|
+		cards[i] -= 1
+	end
+	cards[a.sum % 10] += 1
+
+	cards
+end
+
 def s_to_card_a(s : String) : Array(Int32)
 	result = Array(Int32).new 10, 0
 	s.each_char do |c|

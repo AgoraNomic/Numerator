@@ -29,6 +29,33 @@ begin
 			cards: s_to_card_a(ARGV[3]).map do |c| -c end,
 			comment: ARGV[4]?
 		)
+	when "undo", "u"
+		ARGV[1..].each do |x|
+			ctx.undo_by_id UUID.new x
+		end
+	when "transmute", "m"
+		ARGV[2].split(",").each do |ent|
+			ARGV[3].split(",").each do |str|
+				chars = str.chars
+				cards = create_transmute_card_a(chars.map do |x|
+					x.to_i
+				end)
+
+				ctx.grant(
+					ts: Time.parse!(ARGV[1], "%a, %-d %b %Y %H:%M:%S %z"),
+					name: ent,
+					cards: cards,
+					comment: ARGV[4]?
+				)
+			end
+		end
+	when "win", "w"
+		ctx.grant(
+			ts: Time.parse!(ARGV[1], "%a, %-d %b %Y %H:%M:%S %z"),
+			name: ARGV[2],
+			cards: Array(Int32).new(10, -1),
+			comment: ARGV[3]?
+		)
 	when "report", "p"
 		env = Crinja.new
 		env.loader = Crinja::Loader::FileSystemLoader.new "template/"
@@ -43,18 +70,24 @@ begin
 
 		template = env.get_template("report.j2")
 		idx = 1
+		entities = ctx.get_entities
 		puts template.render({
 			"notes" => ctx.get_note_text,
 			"date" => Time.utc,
-			"entities" => ctx.get_entities.map do |e|
+			"entities" => entities.map do |e|
 				sprintf(
 					"%-8s%3s%s",
 					e.@shortname,
-					e.@fullname ? "[#{idx}]" : "   ",
+					e.@fullname ? " [#{idx}]" : "    ",
 					e.@cards.map do |c|
-						sprintf "    %02d", c
+						sprintf "  %04d", c
 					end.sum
 				)
+			end,
+			"long_names" => entities.select do |x|
+				x.@fullname != nil
+			end.map_with_index do |x, i|
+				[x.@fullname, i + 1]
 			end,
 			"history" => ctx.get_history
 		})
