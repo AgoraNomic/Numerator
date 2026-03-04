@@ -47,7 +47,7 @@ parseRegister = fmap CmdRegister $ Register
 
 -- Parser for 'adjust', 'grant', 'revoke', 'transmute' commands
 parseAdjust :: String -> Parser Command
-parseAdjust cmdName = fmap (CmdAdjust) $ Adjust
+parseAdjust cmdName = fmap CmdAdjust $ Adjust
   <$> strArgument (metavar "DATE" <> help "Date")
   <*> strArgument (metavar "NAME" <> help "Name")
   <*> strArgument (metavar "CARDS" <> help "Cards")
