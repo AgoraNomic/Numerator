@@ -61,6 +61,7 @@ library
     exposed-modules:
         Args,
         Statements,
+        Readers,
         RunCommand,
         Util
 
