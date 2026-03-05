@@ -15,15 +15,15 @@ registerSession reg =
     , longName reg
     ) registerStatement
 
-adjustSession :: Adjust -> Sess.Session UUID
-adjustSession adj =
-  Sess.statement
-    ( name adj
-    , date adj
-    , cards adj
-    , comment adj
-    )
-    adjustByNameStatement
+-- adjustSession :: Adjust -> Sess.Session UUID
+-- adjustSession adj =
+--   Sess.statement
+--     ( name adj
+--     , date adj
+--     , cards adj
+--     , comment adj
+--     )
+--     adjustByNameStatement
 
 grantSession :: Adjust -> Sess.Session UUID
 grantSession adj =

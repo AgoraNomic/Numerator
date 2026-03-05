@@ -70,7 +70,7 @@ parseTransfer = fmap CmdTransfer $ Transfer
 parseCommand :: Parser Command
 parseCommand = subparser
     ( command "register" (info (parseRegister) (progDesc "Register a player"))
-   <> command "adjust"  (info (parseAdjust "adjust") (progDesc "Adjust players' balances"))
+   -- <> command "adjust"  (info (parseAdjust "adjust") (progDesc "Adjust players' balances"))
    <> command "grant"   (info (parseAdjust "grant") (progDesc "Grant cards"))
    <> command "revoke"  (info (parseAdjust "revoke") (progDesc "Revoke cards"))
    <> command "transmute" (info (parseAdjust "transmute") (progDesc "Transmute cards"))
