@@ -92,3 +92,24 @@ adjustByNameStatement =
     WHERE shortname = $1 :: text
     RETURNING action.id :: uuid
   |]
+
+transferByIdStatement :: Statement.Statement (UUID, UUID, LocalTime, Vector Int32, Maybe Text) UUID
+transferByIdStatement =
+  [singletonStatement|
+    INSERT INTO action (subject, receiver, action, ts, cards, comment)
+    VALUES ($1 :: uuid, $2 :: uuid, 'transfer', $3 :: timestamp, $4 :: int4[], $5 :: text?)
+    RETURNING id :: uuid
+  |]
+
+transferByNameStatement :: Statement.Statement (Text, Text, LocalTime, Vector Int32, Maybe Text) UUID
+transferByNameStatement =
+  [singletonStatement|
+    WITH
+      sub (subid) AS (SELECT id FROM entity WHERE shortname = $1 :: text),
+      rec (recid) AS (SELECT id FROM entity WHERE shortname = $2 :: text)
+    INSERT INTO action (subject, receiver, action, ts, cards, comment)
+    SELECT subid, recid, 'transfer', $3 :: timestamp, $4 :: int4[], $5 :: text?
+    FROM sub CROSS JOIN rec
+    WHERE shortname = $1 :: text
+    RETURNING action.id :: uuid
+  |]
