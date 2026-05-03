@@ -71,7 +71,7 @@ class NumeratorContext
 				FROM action
 					LEFT JOIN entity AS sub ON sub.id = action.subject
 					LEFT JOIN entity AS rec ON rec.id = action.receiver
-				ORDER BY action.ts
+				ORDER BY action.ts, action.serialid
 			SQL
 
 		rs.each do
@@ -105,6 +105,37 @@ class NumeratorContext
 		end
 
 		puts newcards
+	end
+
+	def transfer(from from_name : String, to to_name : String, ts timestamp : Time, cards : Array(Int32), comment : String | Nil = nil)
+		from_ent = get_entity_by_name from_name
+		to_ent = get_entity_by_name to_name
+
+		newcards_from = from_ent.@cards.zip(cards).map do |c|
+			c[0] - c[1]
+		end
+
+		newcards_to = to_ent.@cards.zip(cards).map do |c|
+			c[0] + c[1]
+		end
+
+		@conn.transaction do |tx|
+			@conn.exec <<-SQL, from_ent.@id, to_ent.@id, timestamp, cards, comment
+				INSERT INTO action (subject, receiver, action, ts, cards, comment)
+				VALUES ($1, $2, 'transfer', $3, $4, $5);
+			SQL
+
+			@conn.exec <<-SQL, newcards_from, from_ent.@id
+				UPDATE entity SET cards = $1 WHERE id = $2
+			SQL
+
+			@conn.exec <<-SQL, newcards_to, to_ent.@id
+				UPDATE entity SET cards = $1 WHERE id = $2
+			SQL
+		end
+
+		puts newcards_from
+		puts newcards_to
 	end
 
 	def undo_by_id(id : UUID) : Bool

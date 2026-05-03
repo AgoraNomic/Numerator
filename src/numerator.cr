@@ -16,15 +16,24 @@ begin
 		comment = comment.gsub "#", ARGV[3] if comment
 		ARGV[2].split(",").each do |ent|
 			ctx.grant(
-				ts: Time.parse!(ARGV[1], "%a, %-d %b %Y %H:%M:%S %z"),
+				ts: Time.parse!(ARGV[1], "%a, %-d %b %Y %H:%M:%S %z").to_utc,
 				name: ent,
 				cards: s_to_card_a(ARGV[3]),
 				comment: comment
 			)
 		end
+	when "transfer", "x"
+		comment = ARGV[5]?
+		ctx.transfer(
+			ts: Time.parse!(ARGV[1], "%a, %-d %b %Y %H:%M:%S %z").to_utc,
+			from: ARGV[2],
+			to: ARGV[3],
+			cards: s_to_card_a(ARGV[4]),
+			comment: comment
+		)
 	when "revoke", "r"
 		ctx.grant(
-			ts: Time.parse!(ARGV[1], "%a, %-d %b %Y %H:%M:%S %z"),
+			ts: Time.parse!(ARGV[1], "%a, %-d %b %Y %H:%M:%S %z").to_utc,
 			name: ARGV[2],
 			cards: s_to_card_a(ARGV[3]).map do |c| -c end,
 			comment: ARGV[4]?
@@ -42,7 +51,7 @@ begin
 				end)
 
 				ctx.grant(
-					ts: Time.parse!(ARGV[1], "%a, %-d %b %Y %H:%M:%S %z"),
+					ts: Time.parse!(ARGV[1], "%a, %-d %b %Y %H:%M:%S %z").to_utc,
 					name: ent,
 					cards: cards,
 					comment: ARGV[4]?
@@ -51,7 +60,7 @@ begin
 		end
 	when "win", "w"
 		ctx.grant(
-			ts: Time.parse!(ARGV[1], "%a, %-d %b %Y %H:%M:%S %z"),
+			ts: Time.parse!(ARGV[1], "%a, %-d %b %Y %H:%M:%S %z").to_utc,
 			name: ARGV[2],
 			cards: Array(Int32).new(10, -1),
 			comment: ARGV[3]?
